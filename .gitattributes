@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+*.hcl          text
+*.lock         text
+*.md           text diff=markdown
+*.tf           text
+*.tofu         text
+*.toml         text
+*.yml          text
+
+.editorconfig  text
+.gitattributes text
+.gitignore     text
+LICENSE        text

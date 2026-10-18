@@ -1,0 +1,70 @@
+# Nothing updates mise for us. Check https://github.com/jdx/mise/releases now
+# and then, but don't take a release younger than a week; we want to give the
+# internet a chance to find any problems before we do.
+#
+# Keep `min_version` in sync with:
+#
+# - `.github/workflows/ci.yml`•`jdx/mise-action`•`version`
+# - mise's schema URL in `.config/tombi.toml`.
+min_version = "2026.10.2"
+
+[settings]
+# Hide releases younger than a week from `mise outdated --bump`
+minimum_release_age = "7d"
+
+[tasks.lint]
+# We don't run this task in CI. We give each linter its own named step in
+# `.github/workflows/ci.yml`•`jobs`•`check`•`steps` so failures are quick to
+# spot.
+#
+# We intentionally stop on the first failure because fixing one problem usually
+# fixes others, and there's no point burning time and electrons on a report
+# that falls out of date before we can finish reading it.
+description = "Run the linters"
+depends = ["lint:*"]
+
+[tasks."lint:editorconfig"]
+description = "Lint files against .editorconfig"
+run = "editorconfig-checker"
+
+[tasks."lint:markdown"]
+description = "Lint Markdown files"
+run = "rumdl check --deny-config-warnings"
+
+[tasks."lint:tofu"]
+description = "Lint the OpenTofu files"
+run = [
+  # Check that files are formatted correctly:
+  "tofu fmt -check -diff -recursive",
+  # `tofu validate` requires the module to have been initialised, which it
+  # won't be yet on fresh clones -- so do it!
+  #
+  # - `-backend=false` — this module has no backend.
+  # - `-input=false` — headless initialisation.
+  # - `-lockfile=readonly` — don't update `.terraform.lock.hcl`, and fail if
+  #   providers were added or removed (other drift only warns).
+  "tofu init -backend=false -input=false -lockfile=readonly",
+  # Check that files describe valid infrastructure:
+  "tofu validate",
+]
+
+[tasks."lint:toml"]
+description = "Lint TOML files"
+run = [
+  "tombi lint --error-on-warnings .",
+  "tombi format --check --diff .",
+]
+
+[tasks.test]
+description = "Test the module, mostly with a mock provider"
+# `tofu test` needs an initialised module, and `lint:tofu` initialises it.
+depends = ["lint:tofu"]
+run = "tofu test"
+
+# Nothing updates these tools for us. Run `mise outdated --bump` now and then.
+[tools]
+editorconfig-checker = "4.0.2"  # Lint files against .editorconfig
+opentofu = "1.12.6"             # Infrastructure as code
+# Keep in sync with schema URL in `.config/tombi.toml`:
+rumdl = "0.2.77"                # Lint Markdown files
+tombi = "1.5.5"                 # Lint TOML files
