@@ -5,7 +5,7 @@
 It's highly-opinionated and intentionally not very configurable. For example:
 
 - The site replicates to every edge region that bunny.net supports.
-- Files are cached for five minutes by default, and files with a lowercase SHA256 hash just before their extension (for example, when Hugo fingerprints a file like `main.99ed01e277b426d2d1103c0a04b80e4fa8824f39f1ee453e91511165fb184548.css`) are cached for a year.
+- Files are cached for five minutes by default, but common types of image, font, stylesheet, script, document, audio and video are cached for a year, so you must rename them whenever they change.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ This module creates:
 - **A storage zone** that keeps your website's files on SSDs, replicated around the world.
 - **A pull zone** that serves the storage zone's files through bunny.net's content delivery network (CDN).
 - **Two custom hostnames** on the pull zone and associated DNS records for your domain and its `www.` subdomain, each with a free Let's Encrypt certificate that bunny.net manages and renews.
-- **Edge rules** that keep fingerprinted files for a year and redirect visitors to your preferred domain name.
+- **Edge rules** that keep common types of image, font, stylesheet, script, document, audio and video for a year, and that redirect visitors to your preferred domain name.
 
 This module won't create your Bunny DNS zone or upload your website. You are responsible for creating the zone, and for uploading your website's files to the storage zone.
 
@@ -152,21 +152,40 @@ This module won't create your Bunny DNS zone or upload your website. You are res
 
 ## Caching
 
-This module's caching rules are highly-opinionated and strict. Your website's build process must follow these rules, otherwise every file will be cached for only five minutes. If you're okay with that — and it's not a bad default! — then you can ignore this section.
+This module's caching rules are highly-opinionated and strict. Your website's build process must follow these rules, otherwise your visitors could be stuck with old copies of your files for a year.
 
-A file is *fingerprinted* when its name is `*.<hash>.<extension>`, where the hash is the SHA-256 of its contents in 64 lowercase hex characters, such as `main.9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.css`. Hugo's `fingerprint` names files like that by default. The hash has to come straight before the extension.
+A *year-long file* is any file whose name ends in one of these extensions, in lowercase:
 
-- **Fingerprinted files are kept for a year**, at the edge and in browsers, whatever their type. Their names change whenever their contents do, so a visitor never gets an old copy.
-- **Everything else is kept at the edge for five minutes**, and browsers check with the edge before reusing it. That includes pages, feeds, and files with shorter hashes, uppercase hashes, or hashes elsewhere in their names.
-- **You don't need to purge the cache**, or to give your deploy the account's API key. Once a file's five minutes are up, the next request for it still gets the old copy while the edge fetches the new one.
+| Kind                    | Extensions                                                   |
+| ----------------------- | ------------------------------------------------------------ |
+| Images                  | `.avif`, `.gif`, `.jpeg`, `.jpg`, `.png`, `.svg` and `.webp` |
+| Fonts                   | `.otf`, `.ttf`, `.woff` and `.woff2`                         |
+| Stylesheets and scripts | `.css`, `.js`, `.mjs` and `.wasm`                            |
+| Documents               | `.pdf`                                                       |
+| Audio and video         | `.mp3`, `.mp4` and `.webm`                                   |
+
+- **Year-long files are kept for a year**, at the edge and in browsers, even if their names never change.
+- **Everything else is kept at the edge for five minutes**, and browsers check with the edge before reusing it. That includes pages, feeds, files with uppercase extensions, and `.ico` files, because browsers ask for `/favicon.ico` by name.
+- **You don't need to purge the cache**, or to give your deploy the account's API key, as long as you follow the deploy steps below. Once a file's five minutes are up, the next request for it still gets the old copy while the edge fetches the new one.
 - **While the storage zone is unreachable**, or while the edge fetches a newer copy of a file, bunny.net serves the copy it has.
 - **Missing files get your website's `/404.html`**, with a 404 status. Until you upload one, bunny.net serves its standard 404 page. Neither the edge nor browsers keep a 404, so once you upload the missing file, the next request gets it.
 
 When you deploy:
 
-1. Upload fingerprinted files before the pages that refer to them, so that a page never refers to a file that isn't there yet. Start uploading pages once every fingerprinted file's upload has finished, but you don't need to wait any longer than that. Uploads reach Germany first. bunny.net says they reach the other regions within a couple of seconds, with no guarantee, and that until then, it serves a new file from a region that has it. If a visitor does ask for a file too early, the 404 isn't kept, so their next request gets the file.
-1. Never change a fingerprinted file without renaming it. A purge would clear the old copy from the edge, but not from browsers.
-1. Don't delete old fingerprinted files straight away. Pages still cached at the edge, which can be more than five minutes old, and stylesheets in browsers' caches, can still refer to them.
+1. Upload year-long files before the pages that refer to them, so that a page never refers to a file that isn't there yet. Start uploading pages once every year-long file's upload has finished, but you don't need to wait any longer than that. Uploads reach Germany first. bunny.net says they reach the other regions within a couple of seconds, with no guarantee, and that until then, it serves a new file from a region that has it. If a visitor does ask for a file too early, the 404 isn't kept, so their next request gets the file.
+
+1. Never change a year-long file without renaming it. A purge would clear the old copy from the edge, but not from browsers.
+
+   Hugo's `fingerprint` renames a file whenever its contents change, so let it do the work wherever you can. Your build won't rename the files it doesn't fingerprint, such as a `favicon.svg`, a PDF, or the year-long files in Hugo's `static` directory, so rename those yourself whenever they change.
+
+   Changing only a query string, such as `?v=2`, doesn't count as renaming. The pull zone ignores query strings, so it serves the old copy, and browsers keep that for a year.
+
+   The one exception is a service worker's script, which has to keep its name. Browsers check it for updates without using their cache, so after you change it, purge it from the pull zone in the bunny.net dashboard — otherwise the edge keeps serving the old copy for up to a year.
+
+1. When you rename a year-long file, don't delete the file under its old name straight away. Pages still cached at the edge, which can be more than five minutes old, and stylesheets and scripts in browsers' caches, can still refer to it.
+
+   When you do delete a year-long file, the edge can keep serving it for up to a year, so purge it in the bunny.net dashboard if it has to be gone sooner. Browsers that already have it keep it anyway.
+
 1. Upload `.webmanifest` files with a `Content-Type` of `application/manifest+json`. bunny.net doesn't recognise the extension, so without one it serves them as `application/octet-stream`.
 
 ## Upgrading
