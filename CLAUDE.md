@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-An OpenTofu module (not Terraform) that serves a static website from bunny.net: an Edge-tier storage zone replicated to every Edge region, a pull zone that serves it, custom hostnames with TLS for the bare domain and `www.`, their two Bunny DNS records, and edge rules that keep images, fonts, stylesheets and scripts for a year, redirect to the preferred hostname, and redirect `<zone_name>.b-cdn.net`.
+An OpenTofu module (not Terraform) that serves a static website from bunny.net: an Edge-tier storage zone replicated to every Edge region, a pull zone that serves it, custom hostnames with TLS for the bare domain and `www.`, their two Bunny DNS records, and edge rules that keep files with certain extensions for a year, serve `.webmanifest` files as `application/manifest+json`, redirect to the preferred hostname, and redirect `<zone_name>.b-cdn.net`.
 
 ## Commands
 
@@ -16,7 +16,7 @@ mise exec -- tombi format .                            # Fix TOML formatting
 ## Keep in sync
 
 - After changing `[tools]`, run `mise lock`.
-- Update the README with any change to inputs, resources, DNS records, redirects, caching or versions. Resources are listed in both "Infrastructure" and "Retiring the website". The intro and "Infrastructure" name the kinds of year-long file, not their extensions.
+- Update the README with any change to inputs, resources, DNS records, redirects, caching or versions. Resources are listed in both "Infrastructure" and "Retiring the website". The intro and "Caching" both list the year-long extensions.
 - The README's example pins OpenTofu `~> 1.12.0`. Dependabot's `opentofu` updater bundles 1.12.1, so neither that pin nor the floor in `versions.tofu` may rise past 1.12.
 - When widening the provider range, check in the provider's source that these still hold:
   - The Edge tier's regions (`internal/storagezoneresourcevalidator/region.go`) match those the bunny.net dashboard offers when adding a storage zone. bunny.net's docs and API don't give a reliable list.
@@ -38,9 +38,9 @@ mise exec -- tombi format .                            # Fix TOML formatting
 - The README's record-clearing step rests on live checks against Bunny DNS, not bunny.net's docs. Don't "correct" it from the docs.
 - Hard-code `b-cdn.net` rather than using the pull zone's `cdn_domain`, so values are known at plan and testable under the mock.
 - Never set the pull zone's edge cache time to 0, which bypasses the cache.
-- Bunny Storage can't store `Cache-Control`, so caching stays in edge rules. Don't set `Content-Type` in edge rules.
+- Bunny Storage can't store `Cache-Control`, so caching stays in edge rules. Set `Content-Type` in edge rules only for extensions bunny.net doesn't recognise, such as `.webmanifest`.
 - The year-long rules use `Url` wildcard triggers, not `UrlExtension`, which can't restrict the hostname. Never trigger on `Content-Type`.
-- If a 404 is ever seen kept at the edge, the README's "When you deploy" step 1 is wrong.
+- If a 404 is ever seen kept at the edge, the README's "Upload order" section is wrong.
 - bunny.net runs only the first matching action of each short-circuiting type, such as `OverrideCacheTime`, `OverrideBrowserCacheTime` or `Redirect`, in creation order. Never let two rules use the same one of those types on the same URL, and don't set `priority`, which is untested.
 - Unused action and trigger parameters are `null`, never `""`. Action and trigger types are literals, because `tofu validate` fails on one it can't know.
 
