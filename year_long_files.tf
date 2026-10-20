@@ -1,33 +1,45 @@
-# Files named `*.<hash>.*`, where the hash is 64 lowercase hexadecimal
-# characters (like Hugo's default SHA-256 fingerprint), are kept for a year at
-# the edge and in browsers.
+# Images, fonts, stylesheets, scripts, documents, audio and video are kept for a
+# year at the edge and in browsers, whether or not their names are
+# fingerprinted. A purge can't clear them from browsers, so a file with one of
+# these extensions must be renamed whenever it changes.
 #
-# Their names change whenever their contents do, so a year is safe.
-#
-# Every other file keeps the pull zone's five-minute cache, so a file that isn't
-# fingerprinted is never stuck for long.
+# Every other file keeps the pull zone's five-minute cache. That includes pages,
+# feeds and data (`html`, `xml`, `json` and `txt`), and `favicon.ico`, which
+# browsers ask for by name.
 locals {
-  # The `pattern:` prefix makes bunny.net match the URL, without its query
-  # string, with Lua's `string.find` rather than `*` wildcards.
-  fingerprinted_url_pattern = "pattern:^https://${local.hostname_pattern}/.*%.${local.sha256_pattern}%.[^./]+$"
+  # bunny.net allows at most five patterns per trigger.
+  year_long_extension_groups = chunklist(local.year_long_extensions, 5)
 
-  # The preferred hostname as a Lua pattern. Requests for the other hostname are
-  # redirected, so the rules needn't match them.
-  #
-  # `.` and `-` are the only special characters that we allow, and `%` escapes
-  # them.
-  hostname_pattern = replace(
-    replace(
-      local.preferred_hostname,
-      "-",
-      "%-",
-    ),
-    ".",
-    "%.",
-  )
+  year_long_extensions = [
+    "avif",
+    "css",
+    "gif",
+    "jpeg",
+    "jpg",
+    "js",
+    "mjs",
+    "mp3",
+    "mp4",
+    "otf",
+    "pdf",
+    "png",
+    "svg",
+    "ttf",
+    "wasm",
+    "webm",
+    "webp",
+    "woff",
+    "woff2",
+  ]
 
-  # Lua patterns have no `{64}`, so the class is written out 64 times.
-  sha256_pattern = join("", [for i in range(64) : "[0-9a-f]"])
+  # bunny.net's `*` matches any characters, including `/`, in the whole URL
+  # without its query string. Requests for the other hostname are redirected, so
+  # the rules needn't match them.
+  year_long_url_patterns = [
+    for group in local.year_long_extension_groups : [
+      for extension in group : "https://${local.preferred_hostname}/*.${extension}"
+    ]
+  ]
 }
 
 # bunny.net sends a 404 with `no-cache` even when this rule matches, so browsers
@@ -36,6 +48,9 @@ locals {
 # This rule matches on the URL alone. With a status code trigger, bunny.net
 # would send `max-age=0` with the `304` that answers a browser's revalidation,
 # and the browser would then check the file every time.
+#
+# It has one trigger per group of extensions, and matches any of them. bunny.net
+# allows at most five triggers per rule.
 resource "bunnynet_pullzone_edgerule" "year_long_in_browsers" {
   actions = [
     {
@@ -46,19 +61,19 @@ resource "bunnynet_pullzone_edgerule" "year_long_in_browsers" {
     },
   ]
 
-  description = "Keep fingerprinted files in browsers for a year"
+  description = "Keep ${join(", ", local.year_long_extensions)} files in browsers for a year"
   enabled     = true
   match_type  = "MatchAny"
   pullzone    = bunnynet_pullzone.site.id
 
   triggers = [
-    {
+    for patterns in local.year_long_url_patterns : {
       match_type = "MatchAny"
       parameter1 = null
       parameter2 = null
-      patterns   = [local.fingerprinted_url_pattern]
+      patterns   = patterns
       type       = "Url"
-    },
+    }
   ]
 }
 
@@ -73,6 +88,10 @@ resource "bunnynet_pullzone_edgerule" "year_long_in_browsers" {
 # browser's revalidation or a `206` for a range, that edge location keeps the
 # file for the pull zone's five minutes instead. That costs only extra fetches
 # from storage.
+#
+# There's one rule per group of extensions, because a rule that matches all of
+# its triggers can't also match any of several URL triggers. The groups don't
+# overlap, so no two of these rules match the same URL.
 resource "bunnynet_pullzone_edgerule" "year_long_at_the_edge" {
   actions = [
     {
@@ -83,7 +102,7 @@ resource "bunnynet_pullzone_edgerule" "year_long_at_the_edge" {
     },
   ]
 
-  description = "Keep fingerprinted files at the edge for a year"
+  description = "Keep ${join(", ", local.year_long_extension_groups[count.index])} files at the edge for a year"
   enabled     = true
   match_type  = "MatchAll"
   pullzone    = bunnynet_pullzone.site.id
@@ -100,8 +119,10 @@ resource "bunnynet_pullzone_edgerule" "year_long_at_the_edge" {
       match_type = "MatchAny"
       parameter1 = null
       parameter2 = null
-      patterns   = [local.fingerprinted_url_pattern]
+      patterns   = local.year_long_url_patterns[count.index]
       type       = "Url"
     },
   ]
+
+  count = length(local.year_long_extension_groups)
 }
