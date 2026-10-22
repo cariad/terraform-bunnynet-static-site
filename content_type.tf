@@ -2,6 +2,9 @@
 # `.webmanifest`, as `application/octet-stream`.
 locals {
   content_types = {
+    mjs         = "text/javascript" # RFC 9239's type for JavaScript
+    otf         = "font/otf"
+    ttf         = "font/ttf"
     webmanifest = "application/manifest+json"
   }
 }
