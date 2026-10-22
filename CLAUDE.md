@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-An OpenTofu module (not Terraform) that serves a static website from bunny.net: an Edge-tier storage zone replicated to every Edge region, a pull zone that serves it, custom hostnames with TLS for the bare domain and `www.`, their two Bunny DNS records, and edge rules that keep files with certain extensions for a year, serve `.webmanifest` files as `application/manifest+json`, redirect to the preferred hostname, and redirect `<zone_name>.b-cdn.net`.
+An OpenTofu module (not Terraform) that serves a static website from bunny.net: an Edge-tier storage zone replicated to every Edge region, a pull zone that serves it, custom hostnames with TLS for the bare domain and `www.`, their two Bunny DNS records, and edge rules that keep files with certain extensions for a year, set the content type of certain extensions bunny.net doesn't recognise, redirect to the preferred hostname, and redirect `<zone_name>.b-cdn.net`.
 
 ## Commands
 

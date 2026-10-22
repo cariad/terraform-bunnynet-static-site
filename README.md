@@ -31,7 +31,7 @@ This module creates:
 - **A storage zone** that keeps your website's files on SSDs, replicated around the world.
 - **A pull zone** that serves the storage zone's files through bunny.net's content delivery network (CDN).
 - **Two custom hostnames** on the pull zone and associated DNS records for your domain and its `www.` subdomain, each with a free Let's Encrypt certificate that bunny.net manages and renews.
-- **Edge rules** for caching, and for redirecting visitors to your preferred domain name.
+- **Edge rules** for caching, for setting the content types of a few extensions that bunny.net doesn't recognise, and for redirecting visitors to your preferred domain name.
 
 This module won't create your Bunny DNS zone or upload your website. You are responsible for creating the zone, and for uploading your files to the storage zone.
 
