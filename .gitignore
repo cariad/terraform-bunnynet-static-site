@@ -1,2 +1,4 @@
+/.cache/
 /.rumdl_cache/
 .terraform/
+/site/

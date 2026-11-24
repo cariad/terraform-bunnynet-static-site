@@ -1,0 +1,101 @@
+[project]
+copyright = "&copy; 2026 Cariad Eccleston"
+
+nav = [
+  { "Introduction" = "index.md" },
+  { "Opinions" = "opinions.md" },
+  { "What does it deploy?" = "infrastructure.md" },
+  { "What do I need?" = "prerequisites.md" },
+  { "How do I deploy it?" = [
+    "usage/index.md",
+    { "1. Add your domain to bunny.net" = "usage/1-add-domain.md" },
+    { "2. Add the website module" = "usage/2-add-module.md" },
+    { "3. Set up state storage" = "usage/3-state.md" },
+    { "4. Deploy the website infrastructure" = "usage/4-deploy.md" },
+  ] },
+  { "How do I upload my website?" = "upload.md" },
+  { "How do I upgrade it?" = "upgrade.md" },
+  { "How do I undeploy it?" = "retire.md" },
+  { "Contributing" = "contributing.md" },
+  { "Development setup" = "development.md" },
+]
+
+repo_name = "cariad/terraform-bunnynet-static-site"
+repo_url = "https://github.com/cariad/terraform-bunnynet-static-site"
+site_author = "Cariad Eccleston"
+site_description = "An OpenTofu module to host a static site in bunny.net."
+site_name = "cariad/terraform-bunnynet-static-site documentation"
+site_url = "https://cariad.github.io/terraform-bunnynet-static-site/"
+strict = true
+
+watch = ["CONTRIBUTING.md"]
+
+[[project.extra.social]]
+icon = "fontawesome/solid/user-graduate"
+link = "https://cariad.earth"
+name = "Cariad Eccleston's CV"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/cariad/"
+name = "Cariad Eccleston on GitHub"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/linkedin"
+link = "https://www.linkedin.com/in/cariad/"
+name = "Cariad Eccleston on LinkedIn"
+
+[project.plugins.include-markdown]
+include_from_url = false
+
+[project.plugins.llmstxt]
+full_output = "llms-full.txt"
+
+[project.plugins.llmstxt.sections]
+Documentation = [
+  "index.md",
+  "opinions.md",
+  "infrastructure.md",
+  "prerequisites.md",
+  "usage/index.md",
+  "usage/1-add-domain.md",
+  "usage/2-add-module.md",
+  "usage/3-state.md",
+  "usage/4-deploy.md",
+  "upload.md",
+  "upgrade.md",
+  "retire.md",
+  "contributing.md",
+  "development.md",
+]
+
+[project.plugins.minify]
+minify_html = true
+
+# Generate a preview image for each page, for links shared on social media.
+[project.plugins.social]
+
+[project.theme]
+features = [
+  "content.action.copy",  # Copy as Markdown
+  "content.code.copy",    # Copy button in code blocks
+  "navigation.footer",    # Previous and next links in the footer
+  "navigation.indexes",   # Section titles open the section's index.md
+]
+
+[project.theme.icon]
+logo = "lucide/rabbit"
+
+[[project.theme.palette]]
+accent = "orange"
+media = "(prefers-color-scheme)"
+
+[[project.theme.palette]]
+accent = "orange"
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+
+[[project.theme.palette]]
+accent = "orange"
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
