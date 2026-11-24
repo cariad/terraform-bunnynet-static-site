@@ -1,43 +1,17 @@
 # Contributing
 
-## AI policy
+## Bug reports and feature requests
 
-AI-assisted contributions are welcomed.
+Bug reports and feature requests are very welcome! Please create them as [issues](https://github.com/cariad/terraform-bunnynet-static-site/issues).
 
-## Required tools
+Issues written with AI assistance are welcome.
 
-- [mise](https://mise.jdx.dev/)
+## Code changes
 
-## Initial setup
+If you want to contribute a code change, please find or create the [issue](https://github.com/cariad/terraform-bunnynet-static-site/issues) first, then leave a comment to mention [@cariad](https://github.com/cariad) to let me know you want to take it on. Wait until we've discussed and agreed the change before submitting a pull request.
 
-1. Clone this repository.
+**Unplanned and unexpected pull requests won't be accepted.**
 
-   ```bash
-   git clone git@github.com:cariad/terraform-bunnynet-static-site.git
-   ```
+To set up the project on your development machine, see [Developing](https://cariad.github.io/terraform-bunnynet-static-site/development/).
 
-1. Change into the repository's directory.
-
-   ```bash
-   cd terraform-bunnynet-static-site
-   ```
-
-1. Install the project's tools.
-
-   ```bash
-   mise install
-   ```
-
-1. To verify the setup, run the linters and tests and check they all pass.
-
-   Most tests use a mock provider, and the rest only plan with the real one, so they need no bunny.net API key.
-
-   ```bash
-   mise run lint
-   mise run test
-   ```
-
-## Releasing
-
-1. Update the `ref` in the README's usage example to the new release's tag, and merge that change into `main`.
-1. Publish a GitHub release for `main`.
+Code written with AI assistance is welcome.
